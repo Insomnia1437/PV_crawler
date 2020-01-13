@@ -52,7 +52,7 @@ if __name__ == "__main__":
             mode = args[0].upper()
             if not pb.cfg.is_ok_cfg():
                 print(parser.print_help())
-            if mode == "START" or mode == "STOP" or mode == "RESTART":
+            if mode == "START" or mode == "STOP" or mode == "RESTART" or mode == "DETAIL" or mode == "STATUS":
                 my_name = os.getlogin()
                 if user == "":
                     user = my_name
@@ -68,17 +68,12 @@ if __name__ == "__main__":
                         pb.procboot_stop(sec, user)
                     elif mode == "RESTART":
                         pb.procboot_restart(sec, user)
+                    elif mode == "STATUS":
+                        pb.procboot_print_status(sec, user)
+                    elif mode == "DETAIL":
+                        pass
                     else:
                         parser.print_help()
-
-            elif mode == "DETAIL" or mode == "STATUS":
-                if mode == "STATUS":
-                    pb.procboot_print_status(sec, user)
-                elif mode == "DETAIL":
-                    pass
-                else:
-                    parser.print_help()
             else:
                 print("ERROR: command error %s" % mode)
                 parser.print_help()
-

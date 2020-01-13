@@ -100,12 +100,12 @@ class CfgFile(object):
                 'group': self._get_value(seckey, 'group', self.default_section['group']),
                 }
 
-    def get_prog_sections(self, section=None, user=None):
+    def get_prog_sections(self, section="", user=""):
         seclists = self.cfg.sections()
         seclists.remove(_PROCBOOT_SEC)
         seclists.remove(_DEFAULT_SEC)
         seclists.remove(_PROCSERV_SEC)
-        if user is not None:
+        if user != "":
             sss = []
             for s in seclists:
                 sec = self.get_one_prog_section(s)
@@ -116,7 +116,7 @@ class CfgFile(object):
                 return sss
             seclists = sss
 
-        if section is not None:
+        if section != "":
             sss = []
             for sec in section:
                 if sec in seclists:
@@ -225,7 +225,7 @@ class CfgFile(object):
                 try:
                     # print user
                     sys = platform.platform().split("-")[0]
-                    if sys == "Linux" or sys == "Darwin":
+                    if sys == "Linux" or sys == "Darwin" or sys == "macOS":
                         import pwd
                         pwd.getpwnam(user)
                     else:
@@ -297,16 +297,17 @@ class CfgFile(object):
         if len(res) >= 1:
             for i in map(lambda x: x + "\n", res):
                 print(i)
-            exit(-1)
+            # exit(-1)
         else:
             return True
 
 
 if __name__ == '__main__':
-    cfg1 = CfgFile(r"E:\Workspace\PyCharm\PV_crawler\procBoot\config\boot_test.config".replace('\\', '/'))
+    cfg1 = CfgFile(r"/Users/sdcswd/workspace/python/PV_crawler/procBoot/config/boot_test.config")
     # print()
     # map(cfg1._get_value, (seckey, 'cmnd'))
     cfg1.is_ok_cfg()
+    print(cfg1.get_prog_sections())
     # a = cfg1.check_cfg()
     # if len(a) > 0:
     #     # print(a)

@@ -40,7 +40,7 @@ class ProcBoot(object):
             self.pblfs = ProcBootLockFiles(self.ps_lockpath, self.pb_logfile)
 
     def __get_boot_cmd(self, sections):
-        return '%s -c %s -L %s %d %s' % (self.ps_procserv, sections['path'],
+        return '%s -c %s -L %s %s %s' % (self.ps_procserv, sections['path'],
                                          os.path.join(sections['logpath'], sections['log']), sections['port'],
                                          sections['cmnd'])
 
@@ -79,15 +79,30 @@ class ProcBoot(object):
                     self.logger.error("subprocess communicate method error", exc_info=True)
             else:
                 self.logger.error("create subprocess error", exc_info=True)
-
-            temp = result[1].split(':')
-            prompt = temp[1].strip()
-            pid = int(temp[2].strip())
-            if prompt == "spawning daemon process":
-                self.pblfs.create_lockfile(pid, port_num, boot_cmd, user=user,
-                                           path=sections['path'], logpath=sections['logpath'], group=sections['group'],
-                                           desc=sections['desc'], section=sec_name)
-            print("run %s at port %d, pid is %d" % (sec_name, port_num, pid))
+            """
+            Correct return value:
+            (b'/Users/sdcswd/epics/R3.14.12.8/extensions/bin/darwin-x86/procServ:
+             spawning daemon process: 45203\n')
+             
+            Return value when error happens:
+            (b'Caught an exception creating the initial control telnet port: 
+            Bad file descriptor\n
+            /Users/sdcswd/epics/R3.14.12.8/extensions/bin/darwin-x86/procServ: 
+            Exiting with error code: 48\n')
+            """
+            result = str(result[1], encoding="utf-8")
+            if len(result.split(':')) > 3:
+                print(result)
+                self.logger.error("create procServ error: %s" % result)
+            else:
+                temp = result.split(':')
+                prompt = temp[1].strip()
+                pid = int(temp[2].strip())
+                if prompt == "spawning daemon process":
+                    self.pblfs.create_lockfile(pid, port_num, boot_cmd, user=user,
+                                               path=sections['path'], logpath=sections['logpath'], group=sections['group'],
+                                               desc=sections['desc'], section=sec_name)
+                print("run %s at port %d, pid is %d" % (sec_name, port_num, pid))
 
     def procboot_stop(self, section=None, user=None):
         all_sections = self.__get_sections(section, user)
@@ -188,6 +203,6 @@ class ProcBoot(object):
 
 
 if __name__ == '__main__':
-    cfg_file = "./config/sdcswd_test.config"
+    cfg_file = "./config/boot_test.config"
     pb = ProcBoot(cfg_file)
     pb.procboot_start("cont1", "sdcswd")

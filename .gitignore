@@ -133,3 +133,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 >>>>>>> 6a633ac3278e3e81e01cd47a78bceef46ecf1a47
+
+procBoot/log/lock/
+/procBoot/log/
