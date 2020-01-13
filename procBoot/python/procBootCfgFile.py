@@ -164,8 +164,8 @@ class CfgFile(object):
             # check lockpath
             if not os.path.exists(lockpath):
                 rtn.append("%s lockpath does not exist\n%s" % (error_prefix, lockpath))
-            elif not os.path.isfile(lockpath):
-                rtn.append("%s lockpath is not a file or link\n%s" % (error_prefix, lockpath))
+            elif not os.path.isdir(lockpath):
+                rtn.append("%s lockpath is not a directory\n%s" % (error_prefix, lockpath))
             elif not os.access(lockpath, os.W_OK):
                 rtn.append("%s lockpath cannot be wrote\n%s" % (error_prefix, lockpath))
 
@@ -180,8 +180,8 @@ class CfgFile(object):
             # check lockpath
             if not os.path.exists(logpath):
                 rtn.append("%s logpath does not exist\n%s" % (error_prefix, logpath))
-            elif not os.path.isfile(logpath):
-                rtn.append("%s logpath is not a file or link\n%s" % (error_prefix, logpath))
+            elif not os.path.isdir(logpath):
+                rtn.append("%s logpath is not a directory\n%s" % (error_prefix, logpath))
             elif not os.access(logpath, os.W_OK):
                 rtn.append("%s logpath cannot be wrote\n%s" % (error_prefix, logpath))
 
