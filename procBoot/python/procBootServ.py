@@ -67,8 +67,8 @@ class ProcBoot(object):
             # check whether port exist in the lock
             exist, cmnd = self.pblfs.port_exist_in_lock(port_num)
             if exist:
-                print("section: %s, cmd: '%s' port: '%s' has already used, please check the logger file"
-                      % (sec_name, cmnd, port_num))
+                print("section: %s, port: '%s' Already used!!!"
+                      % (sec_name, port_num))
                 self.logger.info("section: %s, cmd: '%s' port: '%s' has already used, please check the logger file"
                                  % (sec_name, cmnd, port_num))
                 continue
@@ -100,7 +100,8 @@ class ProcBoot(object):
                 pid = int(temp[2].strip())
                 if prompt == "spawning daemon process":
                     self.pblfs.create_lockfile(pid, port_num, boot_cmd, user=user,
-                                               path=sections['path'], logpath=sections['logpath'], group=sections['group'],
+                                               path=sections['path'], logpath=sections['logpath'],
+                                               group=sections['group'],
                                                desc=sections['desc'], section=sec_name)
                 print("run %s at port %d, pid is %d" % (sec_name, port_num, pid))
 
@@ -115,10 +116,10 @@ class ProcBoot(object):
             # check lock
             exist, cmnd = self.pblfs.port_exist_in_lock(port_num)
             if not exist:
-                print("section: %s, cmd: '%s' port: '%s' is not used, please check the logger file"
-                      % (sec_name, cmnd, port_num))
-                self.logger.info("section: %s, cmd: '%s' port: '%s' is not used, please check the logger file"
-                                 % (sec_name, cmnd, port_num))
+                print("section: %s, port: '%s' is not used"
+                      % (sec_name, port_num))
+                self.logger.info("section: %s, port: '%s' is not used, please check the logger file"
+                                 % (sec_name, port_num))
                 continue
             if cmnd != boot_cmd:
                 print("FATAL Error: cmnd in lock file is '%s', but cmnd in config file is '%s'"
@@ -136,7 +137,7 @@ class ProcBoot(object):
             print("kill %s at port %d, pid is %d" % (sec_name, port_num, pid))
 
     def procboot_restart(self, section=None, user=None):
-        startcmd = self.cfg.get_default_section()['startcmd']
+        startcmnd = self.cfg.get_default_section()['startcmnd']
         endline = self.cfg.get_default_section()['endline']
         restartwait = self.cfg.get_default_section()['restartwait']
         all_sections = self.__get_sections(section, user)
@@ -148,10 +149,10 @@ class ProcBoot(object):
             # check lock
             exist, cmnd = self.pblfs.port_exist_in_lock(port_num)
             if not exist:
-                print("section: %s, cmd: '%s' port: '%s' is not used, please check the logger file"
-                      % (sec_name, cmnd, port_num))
-                self.logger.info("section: %s, cmd: '%s' port: '%s' is not used, please check the logger file"
-                                 % (sec_name, cmnd, port_num))
+                print("section: %s, port: '%s' is not used"
+                      % (sec_name, port_num))
+                self.logger.info("section: %s, port: '%s' is not used, please check the logger file"
+                                 % (sec_name, port_num))
                 continue
             if cmnd != boot_cmd:
                 print("Error: cmnd in lock file is '%s', but cmnd in config file is '%s'"
@@ -162,12 +163,18 @@ class ProcBoot(object):
             tn = None
             try:
                 tn = telnetlib.Telnet('localhost', port_num, 5)
-                tn.write('\x03')
+                """
+                '\x03': [CTRL+C] (^C) restart IOC
+                '\x14': [CTRL+T] (^T) Toggled auto restart mode to [OFF, ONESHOT, ON]
+                '\x18': [CTRL+X] (^X) restart IOC
+                'dbl\n': show all PV
+                """
+                tn.write('\x03'.encode("ascii"))
 
-                if restartwait > 0:
+                if int(restartwait) > 0:
                     time.sleep(float(restartwait))
-                if startcmd == '\n':
-                    tn.write('\n')
+                if startcmnd == '\n':
+                    tn.write('\n'.encode("ascii"))
                 else:
                     # TODO restart other procserv program
                     pass
@@ -178,7 +185,8 @@ class ProcBoot(object):
                             line = line.rstrip()[:-1]
                         if endline in line:
                             break
-                    self.logger.info("restart setcion %s, port is %d" % (sec_name, port_num))
+                self.logger.info("restart section %s, port is %d" % (sec_name, port_num))
+                time.sleep(0.1)
             except socket.timeout:
                 self.logger.error("telnet timeout")
             finally:
@@ -200,9 +208,3 @@ class ProcBoot(object):
             port = sections['port']
             print("%s%s%s%s" %
                   ('{:20}'.format(prog), '{:20}'.format(status), '{:20}'.format(user), '{:20}'.format(port)))
-
-
-if __name__ == '__main__':
-    cfg_file = "./config/boot_test.config"
-    pb = ProcBoot(cfg_file)
-    pb.procboot_start("cont1", "sdcswd")

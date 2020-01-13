@@ -40,7 +40,7 @@ def singleton(myclass):
 
 @singleton
 class Logger(object):
-    _DEFAULT_FORMAT = '%(asctime)s, %(levelname)s, %(name)s: [%(filename)s:%(funcName)s: line %(lineno)d] %(message)s'
+    _DEFAULT_FORMAT = '%(asctime)s, %(levelname)s, %(name)s: [%(filename)s:%(funcName)s: line %(lineno)d]\n%(message)s'
     _DEFAULT_DATEFMT = '%Y/%m/%d %H:%M:%S'
     _DEFAULT_LEVEL = 'INFO'
     _DEFAULT_MAXBYTES = 50000000
@@ -72,13 +72,3 @@ class Logger(object):
     @property
     def level(self):
         return
-
-
-if __name__ == '__main__':
-    logger = Logger('test.log')
-    try:
-        2 / 0
-    except ZeroDivisionError:
-        logger.logger.error("divide 0", exc_info=True)
-    logger.logger.warning("hello warning")
-    print(logger)

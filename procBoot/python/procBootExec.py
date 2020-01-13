@@ -63,14 +63,3 @@ class ProcExec(object):
         except subprocess.SubprocessError:
             self.logger.error("write_command error", exc_info=True)
         return rtn
-
-
-# if __name__ == '__main__':
-#     cmnd = "python -m http.server 8000 "
-#     pe = ProcExec("111")
-#     pe.exec_process(cmnd)
-#     print(pe.get_pid())
-#     time.sleep(3)
-#     print(pe.result())
-#
-#     pe.kill()

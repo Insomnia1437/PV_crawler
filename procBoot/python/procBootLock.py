@@ -85,6 +85,7 @@ class ProcBootLockFiles(object):
         try:
             json.dump(lock_items, fd, indent=4, sort_keys=False)
             # self.lfs[pid] = lock_items
+            time.sleep(0.1)
             self.log.info("Create lock file: PID %d, port: %d, cmnd: %s " % (pid, port, cmnd))
         except IOError:
             self.log.error("dump lock file %s error" % fn, exc_infor=True)
@@ -95,12 +96,14 @@ class ProcBootLockFiles(object):
     def remove_lockfile(self, pid):
         if pid in self.get_PID_list():
             filename = self.get_lockdata_from_PID(pid)["filename"]
-            self.log.debug("remove lock file %s for pid %s", (filename, pid))
+            self.log.info("remove lock file %s for pid %s", (filename, pid))
             if len(filename) == 0:
                 self.log.error("PID %s : filename is None" % pid)
             if os.path.exists(filename):
                 os.remove(filename)
-                self.log.info("Remove lock file for PID %s" % pid)
+                self.log.info("remove lock file for PID %s" % pid)
+                # wait some time for logger
+                time.sleep(0.1)
             else:
                 self.log.error("file %s does not exist" % filename)
         self._update_lock_data()
@@ -136,20 +139,3 @@ class ProcBootLockFiles(object):
         for l_data in self.get_all_lockdata():
             rtn.append(l_data['info']['section'])
         return rtn
-
-
-if __name__ == '__main__':
-    pblf = ProcBootLockFiles("lock/", "test.log")
-    print(pblf.get_PID_list())
-    # print(pblf.get_lock_info(12345))
-    # print(pblf.get_lock_info(12345)["pid"])
-    pblf.create_lockfile(1, port=333301, cmnd="some cmd", user="sdcswd", group="control")
-    pblf.create_lockfile(2, port=333302, cmnd="another cmd", user="root", group="control")
-    pblf.create_lockfile(3, port=333303, cmnd="ioc cmd", user="sdcswd", group="control")
-    print(pblf.get_PID_list())
-    # print(pblf.get_all_lockdata())
-    print(pblf.port_exist_in_lock(333303))
-    # time.sleep(5)
-    # pblf.remove_lockfile(3)
-    # print(pblf.check_lock(333303, "ass cmd"))
-    print(pblf.get_PID_list())

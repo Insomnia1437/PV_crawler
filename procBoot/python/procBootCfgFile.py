@@ -300,17 +300,3 @@ class CfgFile(object):
             # exit(-1)
         else:
             return True
-
-
-if __name__ == '__main__':
-    cfg1 = CfgFile(r"/Users/sdcswd/workspace/python/PV_crawler/procBoot/config/boot_test.config")
-    # print()
-    # map(cfg1._get_value, (seckey, 'cmnd'))
-    cfg1.is_ok_cfg()
-    print(cfg1.get_prog_sections())
-    # a = cfg1.check_cfg()
-    # if len(a) > 0:
-    #     # print(a)
-    #     for i in map(lambda x: x + "\n", a):
-    #         print(i)
-    #     exit(-1)
