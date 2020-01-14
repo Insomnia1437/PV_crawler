@@ -265,7 +265,7 @@ class CfgFile(object):
             port = section['port']
             logpath = section['logpath']
             log = section['log']
-            abs_cmnd = os.path.join(path, cmnd)
+            abs_cmnd = path + cmnd
             abs_log = os.path.join(logpath, log)
             if abs_cmnd in cmd_set:
                 rtn.append("[%s]:cmnd overlap \n%s" % (sec, abs_cmnd))
@@ -278,7 +278,7 @@ class CfgFile(object):
                 port_set.add(port)
 
             if abs_log in log_set:
-                rtn.append("[%s]:port overlap \n%s" % (sec, abs_log))
+                rtn.append("[%s]:log overlap \n%s" % (sec, abs_log))
             else:
                 log_set.add(abs_log)
 
@@ -298,5 +298,6 @@ class CfgFile(object):
             for i in map(lambda x: x + "\n", res):
                 print(i)
             # exit(-1)
+            return False
         else:
             return True

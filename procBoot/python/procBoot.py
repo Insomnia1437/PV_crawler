@@ -10,14 +10,14 @@ from procBootServ import ProcBoot
 
 if __name__ == "__main__":
     parser = optparse.OptionParser(
-        usage="%prog [start|stop|restart|status|] [options] configFile")
+        usage="%prog.py [start|stop|restart|status|detail] [options] configFile")
     parser.add_option(
         "-n", "--name",
         action="store",
         type="string",
         default="",
         dest="section",
-        help="process(section) names(any sections join \',\')"
+        help="process(section) names(any sections join \',\', NO SPACE!!!)"
     )
     # parser.add_option(
     #     "-f", "--format",
@@ -33,7 +33,8 @@ if __name__ == "__main__":
         type="string",
         default="",
         dest="user",
-        help="Execute user name(default: execute user)"
+        help="For [status|detail] mode: if specified, show only this user's program status, if not, show all.\n"
+             "For [start|stop|restart] mode: if you want to run user[u]'s program you must switch to user[u]"
     )
     (options, args) = parser.parse_args()
 
@@ -46,21 +47,23 @@ if __name__ == "__main__":
             print('configFile not exist! %s' % configFile)
             parser.print_help()
         else:
-            sec = options.section
+            sec = str(options.section)
+            if sec != "":
+                temp_sec = sec.split(",")
+                sec = [i.strip() for i in temp_sec]
             user = options.user
             pb = ProcBoot(configFile)
             mode = args[0].upper()
             if not pb.cfg.is_ok_cfg():
-                print(parser.print_help())
-            if mode == "START" or mode == "STOP" or mode == "RESTART" or mode == "DETAIL" or mode == "STATUS":
+                parser.print_help()
+            if mode == "START" or mode == "STOP" or mode == "RESTART":
                 my_name = os.getlogin()
                 if user == "":
                     user = my_name
                 else:
                     if user != my_name:
-                        print("ERROR: execute user is not permit")
+                        print("ERROR: You must be login user to change procBoot")
                         parser.print_help()
-                        exit(-1)
                 if user != "":
                     if mode == "START":
                         pb.procboot_start(sec, user)
@@ -68,12 +71,15 @@ if __name__ == "__main__":
                         pb.procboot_stop(sec, user)
                     elif mode == "RESTART":
                         pb.procboot_restart(sec, user)
-                    elif mode == "STATUS":
-                        pb.procboot_print_status(sec, user)
-                    elif mode == "DETAIL":
-                        pass
                     else:
                         parser.print_help()
+            elif mode == "DETAIL" or mode == "STATUS":
+                if mode == "STATUS":
+                    pb.procboot_print_status(sec, user)
+                elif mode == "DETAIL":
+                    pb.proboot_print_detail(sec, user)
+                else:
+                    parser.print_help()
             else:
                 print("ERROR: command error %s" % mode)
                 parser.print_help()

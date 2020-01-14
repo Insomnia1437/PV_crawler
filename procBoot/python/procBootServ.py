@@ -4,6 +4,7 @@
 # @Software: PyCharm
 # @Author  : Di Wang(KEK Linac)
 # @Email   : sdcswd@post.kek.jp
+import json
 import os
 import signal
 import socket
@@ -48,14 +49,15 @@ class ProcBoot(object):
     def __get_abs_cmd(sec):
         return os.path.join(sec['path'], sec['cmnd'])
 
-    def __get_sections(self, section=None, user=None):
+    def __get_sections(self, section="", user=""):
         all_sections = self.cfg.get_prog_sections(section=section, user=user)
         if len(all_sections) == 0:
+            print("No section specified...check sections:%s and user:%s" % (section, user))
             self.logger.warn("No section specified...check sections:%s and user:%s" % (section, user))
             return 0
         return all_sections
 
-    def procboot_start(self, section=None, user=None):
+    def procboot_start(self, section="", user=""):
         all_sections = self.__get_sections(section, user)
         for sec_name in all_sections:
             result = ""
@@ -67,9 +69,9 @@ class ProcBoot(object):
             # check whether port exist in the lock
             exist, cmnd = self.pblfs.port_exist_in_lock(port_num)
             if exist:
-                print("section: %s, port: '%s' Already used!!!"
+                print("section: %s, port: '%d' Already used!!!"
                       % (sec_name, port_num))
-                self.logger.info("section: %s, cmd: '%s' port: '%s' has already used, please check the logger file"
+                self.logger.info("section: %s, cmd: '%s' port: '%d' has already used, please check the logger file"
                                  % (sec_name, cmnd, port_num))
                 continue
 
@@ -105,7 +107,7 @@ class ProcBoot(object):
                                                desc=sections['desc'], section=sec_name)
                 print("run %s at port %d, pid is %d" % (sec_name, port_num, pid))
 
-    def procboot_stop(self, section=None, user=None):
+    def procboot_stop(self, section="", user=""):
         all_sections = self.__get_sections(section, user)
         for sec_name in all_sections:
             sections = self.cfg.get_one_prog_section(sec_name)
@@ -116,9 +118,9 @@ class ProcBoot(object):
             # check lock
             exist, cmnd = self.pblfs.port_exist_in_lock(port_num)
             if not exist:
-                print("section: %s, port: '%s' is not used"
+                print("section: %s, port: '%d' is not used"
                       % (sec_name, port_num))
-                self.logger.info("section: %s, port: '%s' is not used, please check the logger file"
+                self.logger.info("section: %s, port: '%d' is not used, please check the logger file"
                                  % (sec_name, port_num))
                 continue
             if cmnd != boot_cmd:
@@ -136,7 +138,7 @@ class ProcBoot(object):
                     self.logger.error("Try to kill pid: %d" % pid, exc_infor=True)
             print("kill %s at port %d, pid is %d" % (sec_name, port_num, pid))
 
-    def procboot_restart(self, section=None, user=None):
+    def procboot_restart(self, section="", user=""):
         startcmnd = self.cfg.get_default_section()['startcmnd']
         endline = self.cfg.get_default_section()['endline']
         restartwait = self.cfg.get_default_section()['restartwait']
@@ -149,9 +151,9 @@ class ProcBoot(object):
             # check lock
             exist, cmnd = self.pblfs.port_exist_in_lock(port_num)
             if not exist:
-                print("section: %s, port: '%s' is not used"
+                print("section: %s, port: '%d' is not used"
                       % (sec_name, port_num))
-                self.logger.info("section: %s, port: '%s' is not used, please check the logger file"
+                self.logger.info("section: %s, port: '%d' is not used, please check the logger file"
                                  % (sec_name, port_num))
                 continue
             if cmnd != boot_cmd:
@@ -178,13 +180,13 @@ class ProcBoot(object):
                 else:
                     # TODO restart other procserv program
                     pass
-                if endline is not None:
-                    while True:
-                        line = tn.read_until('\n', 1)
-                        if line.endswith('\n'):
-                            line = line.rstrip()[:-1]
-                        if endline in line:
-                            break
+                # if endline is not None:
+                #     while True:
+                #         line = tn.read_until('\n', 1)
+                #         if line.endswith('\n'):
+                #             line = line.rstrip()[:-1]
+                #         if endline in line:
+                #             break
                 self.logger.info("restart section %s, port is %d" % (sec_name, port_num))
                 time.sleep(0.1)
             except socket.timeout:
@@ -193,11 +195,14 @@ class ProcBoot(object):
                 if tn is not None:
                     tn.close()
 
-    def procboot_print_status(self, section=None, user=None):
+    def procboot_print_status(self, section="", user=""):
         all_sections = self.__get_sections(section, user)
         running_sec = self.pblfs.get_sections_list()
         print("%s%s%s%s" %
               ('{:20}'.format("prog"), '{:20}'.format("status"), '{:20}'.format("user"), '{:20}'.format("port")))
+        if len(all_sections) == 0:
+            print("%s%s%s%s" %
+                  ('{:20}'.format("-"), '{:20}'.format("-"), '{:20}'.format("-"), '{:20}'.format("-")))
         for sec_name in all_sections:
             sections = self.cfg.get_one_prog_section(sec_name)
             prog = sec_name
@@ -208,3 +213,21 @@ class ProcBoot(object):
             port = sections['port']
             print("%s%s%s%s" %
                   ('{:20}'.format(prog), '{:20}'.format(status), '{:20}'.format(user), '{:20}'.format(port)))
+
+    def proboot_print_detail(self, section="", user=""):
+        all_sections = self.__get_sections(section, user)
+        running_sec = self.pblfs.get_sections_list()
+        dic = {}
+        for sec_name in all_sections:
+            sections = self.cfg.get_one_prog_section(sec_name)
+            if sec_name in running_sec:
+                dic = self.pblfs.get_lockdata_from_secname(sec_name)
+                dic["status"] = "running"
+            else:
+                dic["user"] = sections['user']
+                dic["port"] = sections['port']
+                dic["desc"] = sections['desc']
+                dic["group"] = sections['group']
+                dic["status"] = "stopped"
+            print(json.dumps(dic, indent=4))
+

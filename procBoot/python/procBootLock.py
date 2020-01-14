@@ -23,6 +23,7 @@ import glob
 import json
 import os
 import time
+import psutil
 
 from procBootLogger import Logger
 
@@ -66,7 +67,7 @@ class ProcBootLockFiles(object):
 
     def create_lockfile(self, pid, port, cmnd, **kwargs):
         if pid in self.get_PID_list():
-            self.log.error("PID %s already exists" % pid)
+            self.log.error("PID %d already exists" % pid)
             return
         now = time.localtime()
         fn = "%d_%s.lock" % (pid, time.strftime("%Y_%m_%d_%H_%M_%S", now))
@@ -96,23 +97,36 @@ class ProcBootLockFiles(object):
     def remove_lockfile(self, pid):
         if pid in self.get_PID_list():
             filename = self.get_lockdata_from_PID(pid)["filename"]
-            self.log.info("remove lock file %s for pid %s", (filename, pid))
+            self.log.info("remove lock file %s for pid %d" % (filename, pid))
             if len(filename) == 0:
-                self.log.error("PID %s : filename is None" % pid)
+                self.log.error("PID %d : filename is None" % pid)
             if os.path.exists(filename):
                 os.remove(filename)
-                self.log.info("remove lock file for PID %s" % pid)
+                self.log.info("remove lock file for PID %d" % pid)
                 # wait some time for logger
                 time.sleep(0.1)
             else:
                 self.log.error("file %s does not exist" % filename)
         self._update_lock_data()
 
+    def check_lockfile_with_process(self):
+
+        self._update_lock_data()
+        for lf in self.lfs.values():
+            pass
+        for proc in psutil.process_iter():
+            try:
+                pinfo = proc.as_dict(attrs=['pid', 'name', 'username'])
+            except psutil.NoSuchProcess:
+                pass
+            else:
+                print(pinfo)
+
     def port_exist_in_lock(self, port):
         rtn = [False, ""]
         for lf in self.lfs.values():
             if int(lf["port"]) == int(port):
-                self.log.debug("port: '%s' is already used" % port)
+                self.log.debug("port: '%d' is already used" % port)
                 rtn[0] = True
                 rtn[1] = lf['cmnd']
                 break
@@ -130,6 +144,13 @@ class ProcBootLockFiles(object):
 
     def get_lockdata_from_PID(self, pid):
         return self.lfs[pid]
+
+    def get_lockdata_from_secname(self, secname):
+        for l_data in self.get_all_lockdata():
+            if l_data['info']['section'] == secname:
+                return l_data
+            else:
+                return {}
 
     def get_all_lockdata(self):
         return self.lfs.values()
