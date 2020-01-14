@@ -112,7 +112,7 @@ class CfgFile(object):
                 if sec['user'] == user:
                     sss.append(s)
             if len(sss) == 0:
-                print("No such user in config file")
+                # print("WARNING: No user '%s' in config file" % user)
                 return sss
             seclists = sss
 
@@ -122,9 +122,10 @@ class CfgFile(object):
                 if sec in seclists:
                     sss.append(sec)
                 else:
-                    print("WARNING: No such section in config file: %s, will be omitted" % sec)
+                    pass
+                    # print("WARNING: No section '%s' in config file, will be omitted" % sec)
             if len(sss) == 0:
-                print("Error: No section specified")
+                # print("Error: No section specified")
                 return sss
             seclists = sss
 

@@ -56,6 +56,8 @@ if __name__ == "__main__":
             mode = args[0].upper()
             if not pb.cfg.is_ok_cfg():
                 parser.print_help()
+                exit(-1)
+            pb.pblfs.check_lockfile_with_process()
             if mode == "START" or mode == "STOP" or mode == "RESTART":
                 my_name = os.getlogin()
                 if user == "":
@@ -64,6 +66,7 @@ if __name__ == "__main__":
                     if user != my_name:
                         print("ERROR: You must be login user to change procBoot")
                         parser.print_help()
+                        exit(0)
                 if user != "":
                     if mode == "START":
                         pb.procboot_start(sec, user)
@@ -83,3 +86,4 @@ if __name__ == "__main__":
             else:
                 print("ERROR: command error %s" % mode)
                 parser.print_help()
+                exit(0)

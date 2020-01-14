@@ -52,9 +52,8 @@ class ProcBoot(object):
     def __get_sections(self, section="", user=""):
         all_sections = self.cfg.get_prog_sections(section=section, user=user)
         if len(all_sections) == 0:
-            print("No section specified...check sections:%s and user:%s" % (section, user))
-            self.logger.warn("No section specified...check sections:%s and user:%s" % (section, user))
-            return 0
+            print("WARNING: No section specified...check sections '%s' and user '%s'" % (section, user))
+            self.logger.warn("No section specified...check sections '%s' and user '%s'" % (section, user))
         return all_sections
 
     def procboot_start(self, section="", user=""):
@@ -69,7 +68,7 @@ class ProcBoot(object):
             # check whether port exist in the lock
             exist, cmnd = self.pblfs.port_exist_in_lock(port_num)
             if exist:
-                print("section: %s, port: '%d' Already used!!!"
+                print("WARNING: section '%s', port '%d' Already used!!!"
                       % (sec_name, port_num))
                 self.logger.info("section: %s, cmd: '%s' port: '%d' has already used, please check the logger file"
                                  % (sec_name, cmnd, port_num))
@@ -118,13 +117,13 @@ class ProcBoot(object):
             # check lock
             exist, cmnd = self.pblfs.port_exist_in_lock(port_num)
             if not exist:
-                print("section: %s, port: '%d' is not used"
+                print("WARNING: section '%s', port '%d' is not used"
                       % (sec_name, port_num))
                 self.logger.info("section: %s, port: '%d' is not used, please check the logger file"
                                  % (sec_name, port_num))
                 continue
             if cmnd != boot_cmd:
-                print("FATAL Error: cmnd in lock file is '%s', but cmnd in config file is '%s'"
+                print("FATAL ERROR: cmnd in lock file is '%s', but cmnd in config file is '%s'"
                       % (cmnd, boot_cmd))
                 self.logger.error("cmnd in lock file is '%s', but cmnd in config file is '%s'"
                                   % (cmnd, boot_cmd))
@@ -136,7 +135,7 @@ class ProcBoot(object):
                     self.pblfs.remove_lockfile(pid)
                 except OSError:
                     self.logger.error("Try to kill pid: %d" % pid, exc_infor=True)
-            print("kill %s at port %d, pid is %d" % (sec_name, port_num, pid))
+            print("kill '%s' at port '%d', pid is '%d'" % (sec_name, port_num, pid))
 
     def procboot_restart(self, section="", user=""):
         startcmnd = self.cfg.get_default_section()['startcmnd']
@@ -151,7 +150,7 @@ class ProcBoot(object):
             # check lock
             exist, cmnd = self.pblfs.port_exist_in_lock(port_num)
             if not exist:
-                print("section: %s, port: '%d' is not used"
+                print("WARNING: section '%s', port '%d' is not used"
                       % (sec_name, port_num))
                 self.logger.info("section: %s, port: '%d' is not used, please check the logger file"
                                  % (sec_name, port_num))
@@ -188,6 +187,7 @@ class ProcBoot(object):
                 #         if endline in line:
                 #             break
                 self.logger.info("restart section %s, port is %d" % (sec_name, port_num))
+                print("restart section '%s', port is '%d'" % (sec_name, port_num))
                 time.sleep(0.1)
             except socket.timeout:
                 self.logger.error("telnet timeout")
@@ -217,8 +217,8 @@ class ProcBoot(object):
     def proboot_print_detail(self, section="", user=""):
         all_sections = self.__get_sections(section, user)
         running_sec = self.pblfs.get_sections_list()
-        dic = {}
         for sec_name in all_sections:
+            dic = {}
             sections = self.cfg.get_one_prog_section(sec_name)
             if sec_name in running_sec:
                 dic = self.pblfs.get_lockdata_from_secname(sec_name)

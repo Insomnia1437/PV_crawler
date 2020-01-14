@@ -110,17 +110,28 @@ class ProcBootLockFiles(object):
         self._update_lock_data()
 
     def check_lockfile_with_process(self):
-
         self._update_lock_data()
-        for lf in self.lfs.values():
-            pass
-        for proc in psutil.process_iter():
+        lf_pids = list(self.get_PID_list())
+        for proc in psutil.process_iter(attrs=['pid', 'name', 'username', 'exe', 'cmdline']):
             try:
-                pinfo = proc.as_dict(attrs=['pid', 'name', 'username'])
+                if proc.info['name'] == 'procServ':
+                    proc_pid = proc.info['pid']
+                    if proc_pid not in lf_pids:
+                        print("WARNING: procServ (pid: '%d') is running, but not in the lock data." % proc_pid)
+                        self.log.warn("procServ (pid: '%d') is running, but not in the lock data." % proc_pid)
+                        print(proc.info)
+                        print("Perhaps you need to recreate the lock file...\n")
+                    else:
+                        lf_pids.remove(proc_pid)
             except psutil.NoSuchProcess:
-                pass
-            else:
-                print(pinfo)
+                self.log.error("No such process", exc_info=True)
+        for pid in lf_pids:
+            print("ERROR: process '%d' stopped, but data remains in lock." % pid)
+            self.log.error("process '%d' stopped, but data remains in lock." % pid)
+            print(self.get_lockdata_from_PID(pid))
+            inp = input("Do you want to delete this lock file?    [Y/N] (default is No)\n")
+            if inp.upper() == "Y" or inp.upper() == "YES":
+                self.remove_lockfile(pid)
 
     def port_exist_in_lock(self, port):
         rtn = [False, ""]
