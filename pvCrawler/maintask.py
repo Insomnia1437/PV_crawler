@@ -42,18 +42,23 @@ def maintask():
     iocreader = iocReader(tbl_path)
     dbreader = dbReader(msi_path)
     iocs = iocreader.read_ioc()
-    if not es.es.indices.exists(ioc_index):
-        print('Info: index already exists! %s' % ioc_index)
-    else:
-        resp = es.insert_ioc(index=ioc_index, ioc_doc=iocs)
-        print("Insert ioc: " + str(resp['errors']) + ' to ES index: ' + ioc_index)
-    if not es.es.indices.exists(ioc_index):
-        print('Info: index already exists! %s' % pv_index)
-    else:
+    if not es.index_exist(ioc_index):
+        es.index_create(ioc_index)
+        resp = es.insert_data(index=ioc_index, doc=iocs)
+        print("Insert all ioc " + ' to ES index: ' + ioc_index)
+        print("Error?: " + str(resp['errors']))
+
+    if not es.index_exist(pv_index):
+        es.index_create(pv_index)
         for ioc in iocs:
             all_pv = dbreader.stcmd_reader(ioc['IOCPATH'])
-            resp = es.insert_pv(index=pv_index, db_doc=all_pv)
-            print("Insert ioc: " + ioc['IOCNAME'] + str(resp['errors']) + ' to ES index: ' + pv_index)
+            if not all_pv:
+                print("Info: PVs are empty in this ioc: " + ioc['IOCPATH'])
+                continue
+            print(ioc['IOCPATH'], len(all_pv))
+            resp = es.insert_data(index=pv_index, doc=all_pv)
+            print("Insert ioc " + ioc['IOCNAME'] + ' to ES index: ' + pv_index)
+            print("Error?: " + str(resp['errors']))
 
 
 if __name__ == '__main__':

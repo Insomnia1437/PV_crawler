@@ -8,6 +8,15 @@
 from elasticsearch import Elasticsearch
 
 
+def _generate_bulk_body(index, doc: list):
+    es_body = []
+    index_api = {"index": {"_index": index}}
+    for item in doc:
+        es_body.append(index_api)
+        es_body.append(item)
+    return es_body
+
+
 class ESConnector:
     def __init__(self, url):
         self.es = Elasticsearch([url])
@@ -15,27 +24,31 @@ class ESConnector:
     def es_ok(self):
         return self.es.ping()
 
-    def _generate_bulk_body(self, index, doc: list):
-        es_body = []
-        index_api = {"index": {"_index": index}}
-        for item in doc:
-            es_body.append(index_api)
-            es_body.append(item)
-        return es_body
+    def index_exist(self, index):
+        if self.es.indices.exists(index):
+            print('Info: index already exists! %s' % index)
+            return True
+        return False
 
-    def insert_pv(self, index, db_doc, ):
-        body = self._generate_bulk_body(index, db_doc)
-        return self.es.bulk(body=body, index=index)
+    def index_create(self, index):
+        settings = {
+            "settings": {
+                "number_of_shards": 1,
+                "number_of_replicas": 0
+            },
+            "mappings": {}
+        }
+        self.es.indices.create(index=index, ignore=400, body=settings)
+        print('Created Index %s', index)
 
-    def insert_ioc(self, index, ioc_doc):
+    def insert_data(self, index, doc, ):
         """
-        send ioc info to ES
-        :param index: ES index
-        :param ioc_doc: example:
-        [{'IOCNAME': name,'IOCHOST': host,'IOCPORT': port,'IOCPATH': path}]
-        :return: ES response
+        add data into the elastic search database
+        :param index: index name
+        :param doc: data
+        :return: response json data from elasticsearch
         """
-        body = self._generate_bulk_body(index, ioc_doc)
+        body = _generate_bulk_body(index, doc)
         return self.es.bulk(body=body, index=index)
 
 

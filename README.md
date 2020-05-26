@@ -47,6 +47,13 @@ BPM_SYNCSHM	host2	30001	 /epics/BPMSync/iocBoot/iocBPMsyncApp/BPMSyncSHM.cmd
 
 2. alternatively [pymsi - a msi alternative written in python](https://www-csr.bessy.de/control/pymsi/) 
 
+## **!!! Important**
+
+There are some bugs in the original msi, please use this one:
+[https://github.com/Insomnia1437/msi](https://github.com/Insomnia1437/msi)
+
+--------------
+
 search the `st.cmd` or similar file for two functions:
 
 - `dbLoadRecords()`
@@ -72,3 +79,7 @@ Note: EPICS PV name must be composed out of the following characters:
 Using `Kibana` to check the result.
 
 If successful, use this project to search PV on webpage [https://github.com/Insomnia1437/pvSearch-vue-node-es](https://github.com/Insomnia1437/pvSearch-vue-node-es) 
+
+## TODO
+
+- Allow user to add other `stcmd` file path in the `config` file
