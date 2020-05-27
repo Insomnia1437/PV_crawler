@@ -31,15 +31,65 @@ class ESConnector:
         return False
 
     def index_create(self, index):
-        settings = {
-            "settings": {
-                "number_of_shards": 1,
-                "number_of_replicas": 0
-            },
-            "mappings": {}
+        settings = {"settings": {
+            "number_of_shards": 1,
+            "number_of_replicas": 0,
+            "analysis": {
+                "analyzer": {
+                    "epics_pv_analyzer": {
+                        "type": "custom",
+                        "tokenizer": "pv_tokenizer",
+                        "filter": [
+                            "lowercase"
+                        ]
+                    }
+                },
+                "tokenizer": {
+                    "pv_tokenizer": {
+                        "type": "char_group",
+                        "tokenize_on_chars": [
+                            ":",
+                            "-",
+                            "_",
+                            " "
+                        ]
+                    }
+                }
+            }
+        },
+            "mappings": {
+                "properties": {
+                    "PVNAME": {
+                        "type": "text",
+                        "analyzer": "epics_pv_analyzer",
+                        "search_analyzer": "epics_pv_analyzer"
+                    },
+                    "PVTYPE": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                    },
+                    "DTYP": {
+                        "type": "text"
+                    },
+                    "NELM": {
+                        "type": "integer"
+                    },
+                    "PINI": {
+                        "type": "keyword"
+                    },
+                    "FLNK": {
+                        "type": "text",
+                        "analyzer": "epics_pv_analyzer",
+                        "search_analyzer": "epics_pv_analyzer"
+                    },
+                    "FTVL": {
+                        "type": "keyword"
+                    }
+                }
+            }
         }
         self.es.indices.create(index=index, ignore=400, body=settings)
-        print('Created Index %s', index)
+        print('Created Index %s' % index)
 
     def insert_data(self, index, doc, ):
         """
@@ -49,7 +99,8 @@ class ESConnector:
         :return: response json data from elasticsearch
         """
         body = _generate_bulk_body(index, doc)
-        return self.es.bulk(body=body, index=index)
+        # add bulk API timeout value: 300 seconds
+        return self.es.bulk(body=body, index=index, request_timeout=300)
 
 
 if __name__ == '__main__':

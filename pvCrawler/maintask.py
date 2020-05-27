@@ -43,7 +43,7 @@ def maintask():
     dbreader = dbReader(msi_path)
     iocs = iocreader.read_ioc()
     if not es.index_exist(ioc_index):
-        es.index_create(ioc_index)
+        # es.index_create(ioc_index)
         resp = es.insert_data(index=ioc_index, doc=iocs)
         print("Insert all ioc " + ' to ES index: ' + ioc_index)
         print("Error?: " + str(resp['errors']))

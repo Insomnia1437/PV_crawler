@@ -11,20 +11,17 @@ import shlex
 
 
 def env_substitute(para, env: dict):
-    # para = 'HEAD=${HEAD}, DEVICE=${DEVICE}, ADDR=${ADDR}'
-    pattern = re.compile(r"\${(.*?)}", re.M)
+    # para = 'HEAD=${HEAD}, DEVICE=${DEVICE}, ADDR=$(ADDR)'
+    pattern = re.compile(r"\$[{(](.*?)[)}]", re.M)
     items = re.findall(pattern, para)
     for item in items:
-        if item in env.keys():
+        if item.strip() in env.keys():
             value = env[item]
         else:
             print('Error, can not substitute this value: %s from epicsEnv' % item)
             return None
-        ptn = r"\${(" + item + ")}"
+        ptn = r"\$[{(](" + item + ")[)}]"
         para = re.sub(ptn, value, para)
-    para = para.replace('$', '')
-    para = para.replace('{', '')
-    para = para.replace('}', '')
     return para
 
 
@@ -88,9 +85,9 @@ class dbReader:
                     line = line.replace("\"", "")
                     all_pv.extend(self.read_templates(ioc_path, stcmd, line.strip()))
                 if line.startswith("dbLoadRecords"):
-                    line = line.replace("dbLoadRecords", "")
-                    line = line.replace("(", "")
-                    line = line.replace(")", "")
+                    line = line.replace("dbLoadRecords", "").strip()
+                    if line[0] == '(':
+                        line = line[1:-1]
                     line = line.replace("\"", "")
                     db = line.split(',', 1)
                     if len(db) == 1 or (len(db) == 2 and len(db[1]) == 0):
